@@ -17,6 +17,10 @@ enum ScaffoldResources {
         try loadData(named: "presets", withExtension: "json")
     }
     
+    static func claudeGuide() throws -> String {
+        try loadString(named: "CLAUDE", withExtension: "md")
+    }
+    
     private static func loadString(named name: String, withExtension ext: String) throws -> String {
         let url = try resourceURL(named: name, withExtension: ext)
         return try String(contentsOf: url)

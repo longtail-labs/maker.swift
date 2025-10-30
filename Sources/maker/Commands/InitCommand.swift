@@ -56,6 +56,13 @@ extension Maker {
                 encoding: .utf8
             )
             
+            let claudeGuide = try ScaffoldResources.claudeGuide()
+            try claudeGuide.write(
+                to: URL(fileURLWithPath: "\(path)/CLAUDE.md"),
+                atomically: true,
+                encoding: .utf8
+            )
+            
             print("\n✅ Project initialized successfully!")
             print("\nNext steps:")
             print("  cd \(path)")
