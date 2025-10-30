@@ -1,8 +1,6 @@
 import Foundation
 
 enum ScaffoldResources {
-    private static let scaffoldSubdirectory = "Scaffold"
-    
     static func exampleTemplate() throws -> String {
         try loadString(named: "Template", withExtension: "swift")
     }
@@ -42,8 +40,7 @@ enum ScaffoldResources {
     private static func resourceURL(named name: String, withExtension ext: String) throws -> URL {
         guard let url = Bundle.module.url(
             forResource: name,
-            withExtension: ext,
-            subdirectory: scaffoldSubdirectory
+            withExtension: ext
         ) else {
             throw ResourceError.missingResource(name: name, ext: ext)
         }
