@@ -1,9 +1,11 @@
 import Foundation
 
 struct PresetsLibrary {
-    static func load() -> [String: ScreenSize] {
-        let presetsPath = "presets.json"
-        if let data = try? Data(contentsOf: URL(fileURLWithPath: presetsPath)),
+    static func load(projectPath: String = ".") -> [String: ScreenSize] {
+        let projectURL = URL(fileURLWithPath: projectPath).standardizedFileURL
+        let presetsURL = projectURL.appendingPathComponent("presets.json")
+        
+        if let data = try? Data(contentsOf: presetsURL),
            let presets = try? JSONDecoder().decode([String: ScreenSize].self, from: data) {
             return presets
         }

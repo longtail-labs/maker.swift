@@ -7,12 +7,17 @@ extension Maker {
             abstract: "List available templates"
         )
         
+        @Option(name: .long, help: "Project directory (default: current directory)")
+        var project: String = "."
+        
         func run() throws {
-            let templatesDir = "templates"
             let fileManager = FileManager.default
+            let projectURL = URL(fileURLWithPath: project).standardizedFileURL
+            let templatesDir = projectURL.appendingPathComponent("templates").path
             
             guard fileManager.fileExists(atPath: templatesDir) else {
-                print("❌ No templates directory found. Run 'maker init' first.")
+                print("❌ No templates directory found in \(projectURL.path).")
+                print("   Run 'maker init' first or pass --project to point at an existing workspace.")
                 return
             }
             

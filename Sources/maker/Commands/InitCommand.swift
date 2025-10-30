@@ -61,7 +61,8 @@ extension Maker {
             print("  cd \(path)")
             print("  maker list                  # List available templates")
             print("  maker render Example         # Render example template")
-            print("  maker batch configs/example  # Run example batch")
+            print("  maker batch configs/example.json  # Run example batch")
+            print("\nTip: running from outside the project? pass '--project \(path)' to commands, e.g. 'swift run maker list --project \(path)'.")
         }
     }
 }

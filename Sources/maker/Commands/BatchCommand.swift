@@ -10,22 +10,32 @@ extension Maker {
         @Argument(help: "Path to batch config JSON")
         var config: String
         
+        @Option(name: .long, help: "Project directory (default: current directory)")
+        var project: String = "."
+        
         func run() throws {
-            guard FileManager.default.fileExists(atPath: config) else {
-                print("❌ Config file not found: \(config)")
+            let projectURL = URL(fileURLWithPath: project).standardizedFileURL
+            guard let configPath = PathResolver.firstExisting(
+                candidates: [config],
+                relativeTo: projectURL
+            ) else {
+                print("❌ Config file not found. Tried: \(config) relative to \(projectURL.path)")
                 throw ExitCode.failure
             }
             
-            let data = try Data(contentsOf: URL(fileURLWithPath: config))
+            let data = try Data(contentsOf: URL(fileURLWithPath: configPath))
             let batchConfig = try JSONDecoder().decode(BatchConfig.self, from: data)
             
-            let outputDir = batchConfig.outputDirectory ?? "output"
+            let outputDir = PathResolver.makeAbsolute(
+                batchConfig.outputDirectory ?? "output",
+                relativeTo: projectURL
+            )
             try FileManager.default.createDirectory(atPath: outputDir, withIntermediateDirectories: true)
             
             print("📦 Running batch: \(batchConfig.screens.count) screens")
             print("📂 Output directory: \(outputDir)")
             
-            let presets = PresetsLibrary.load()
+            let presets = PresetsLibrary.load(projectPath: projectURL.path)
             let timestamp = DateFormatter.timestamp.string(from: Date())
             
             for (index, screen) in batchConfig.screens.enumerated() {
@@ -41,9 +51,15 @@ extension Maker {
                     size = ScreenSize(width: 1080, height: 1350)
                 }
                 
-                let outputPath = screen.output ?? {
-                    let name = screen.name ?? "\(timestamp)-\(index + 1)"
-                    return "\(outputDir)/\(name).jpg"
+                let outputPath = {
+                    if let rawOutput = screen.output {
+                        return PathResolver.makeAbsolute(rawOutput, relativeTo: projectURL)
+                    } else {
+                        let name = screen.name ?? "\(timestamp)-\(index + 1)"
+                        return URL(fileURLWithPath: outputDir)
+                            .appendingPathComponent("\(name).jpg")
+                            .path
+                    }
                 }()
                 
                 let paramsPath: String?
@@ -55,14 +71,41 @@ extension Maker {
                     try inlineData.write(to: URL(fileURLWithPath: tempPath))
                     paramsPath = tempPath
                 } else {
-                    paramsPath = screen.params
+                    if let params = screen.params {
+                        paramsPath = PathResolver.firstExisting(
+                            candidates: [params],
+                            relativeTo: projectURL
+                        )
+                    } else {
+                        paramsPath = nil
+                    }
+                }
+                
+                let templatePathCandidates: [String]
+                if screen.template.hasSuffix(".swift") {
+                    templatePathCandidates = [screen.template]
+                } else {
+                    templatePathCandidates = [
+                        screen.template,
+                        "templates/\(screen.template)/Template.swift"
+                    ]
+                }
+                
+                guard let templatePath = PathResolver.firstExisting(
+                    candidates: templatePathCandidates,
+                    relativeTo: projectURL
+                ) else {
+                    let screenName = screen.name ?? "(unnamed)"
+                    print("  ❌ Template not found for screen \(screenName). Skipping.")
+                    continue
                 }
                 
                 try renderTemplate(
-                    templatePath: screen.template,
+                    templatePath: templatePath,
                     paramsPath: paramsPath,
                     outputPath: outputPath,
-                    size: size
+                    size: size,
+                    projectPath: projectURL.path
                 )
                 
                 if screen.paramsInline != nil, let paramsPath {

@@ -22,27 +22,50 @@ extension Maker {
         @Option(name: .shortAndLong, help: "Output path")
         var output: String?
         
+        @Option(name: .long, help: "Project directory (default: current directory)")
+        var project: String = "."
+        
         func run() throws {
-            let templatePath: String
+            let projectURL = URL(fileURLWithPath: project).standardizedFileURL
+            
+            let templateCandidates: [String]
             if template.hasSuffix(".swift") {
-                templatePath = template
+                templateCandidates = [template]
             } else {
-                templatePath = "templates/\(template)/Template.swift"
+                templateCandidates = [
+                    "templates/\(template)/Template.swift",
+                    template
+                ]
             }
             
-            guard FileManager.default.fileExists(atPath: templatePath) else {
-                print("❌ Template not found: \(templatePath)")
+            guard let templatePath = PathResolver.firstExisting(
+                candidates: templateCandidates,
+                relativeTo: projectURL
+            ) else {
+                let candidateList = templateCandidates.joined(separator: ", ")
+                print("❌ Template not found. Tried: \(candidateList) relative to \(projectURL.path)")
                 throw ExitCode.failure
             }
             
+            let templateFolder = URL(fileURLWithPath: templatePath)
+                .deletingLastPathComponent()
+                .lastPathComponent
+            
             let paramsPath: String?
             if let params = params {
+                let paramsCandidates: [String]
                 if params.hasSuffix(".json") || params.contains("/") {
-                    paramsPath = params
+                    paramsCandidates = [params]
                 } else {
-                    let templateName = template.split(separator: "/").last ?? Substring(template)
-                    paramsPath = "templates/\(templateName)/params/\(params).json"
+                    paramsCandidates = [
+                        "templates/\(templateFolder)/params/\(params).json",
+                        params
+                    ]
                 }
+                paramsPath = PathResolver.firstExisting(
+                    candidates: paramsCandidates,
+                    relativeTo: projectURL
+                )
             } else {
                 paramsPath = nil
             }
@@ -59,7 +82,7 @@ extension Maker {
                     throw ExitCode.failure
                 }
             } else if let preset = preset {
-                let presets = PresetsLibrary.load()
+                let presets = PresetsLibrary.load(projectPath: projectURL.path)
                 if let presetSize = presets[preset.lowercased()] {
                     renderSize = presetSize
                 } else {
@@ -71,12 +94,17 @@ extension Maker {
                 renderSize = ScreenSize(width: 1080, height: 1350)
             }
             
-            let outputPath = output ?? {
-                let timestamp = DateFormatter.timestamp.string(from: Date())
-                let templateName = URL(fileURLWithPath: templatePath)
-                    .deletingPathExtension()
-                    .lastPathComponent
-                return "output/\(timestamp)-\(templateName)-\(renderSize.description).jpg"
+            let outputPath = {
+                if let custom = output {
+                    return PathResolver.makeAbsolute(custom, relativeTo: projectURL)
+                } else {
+                    let timestamp = DateFormatter.timestamp.string(from: Date())
+                    let templateName = URL(fileURLWithPath: templatePath)
+                        .deletingPathExtension()
+                        .lastPathComponent
+                    let relativeOutput = "output/\(timestamp)-\(templateName)-\(renderSize.description).jpg"
+                    return PathResolver.makeAbsolute(relativeOutput, relativeTo: projectURL)
+                }
             }()
             
             print("🎨 Rendering template...")
@@ -91,7 +119,8 @@ extension Maker {
                 templatePath: templatePath,
                 paramsPath: paramsPath,
                 outputPath: outputPath,
-                size: renderSize
+                size: renderSize,
+                projectPath: projectURL.path
             )
         }
     }

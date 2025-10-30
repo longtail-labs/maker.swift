@@ -7,7 +7,8 @@ func renderTemplate(
     templatePath: String,
     paramsPath: String?,
     outputPath: String,
-    size: ScreenSize
+    size: ScreenSize,
+    projectPath: String
 ) throws {
     let templateCode = try String(contentsOf: URL(fileURLWithPath: templatePath))
     
@@ -25,7 +26,10 @@ func renderTemplate(
         .replacingOccurrences(of: "\r", with: "\\r")
         .replacingOccurrences(of: "\t", with: "\\t")
     
-    let componentsCode = loadComponentSources(templatePath: templatePath)
+    let componentsCode = loadComponentSources(
+        templatePath: templatePath,
+        projectPath: projectPath
+    )
     
     let tempFile = "/tmp/maker-render-\(UUID().uuidString).swift"
     let renderCode = """
@@ -156,11 +160,13 @@ func renderTemplate(
     }
 }
 
-func loadComponentSources(templatePath: String) -> String {
+func loadComponentSources(templatePath: String, projectPath: String) -> String {
     var sources: [String] = []
     let fileManager = FileManager.default
     
-    let globalComponentsPath = "components"
+    let globalComponentsPath = URL(fileURLWithPath: projectPath)
+        .appendingPathComponent("components")
+        .path
     if fileManager.fileExists(atPath: globalComponentsPath) {
         sources.append(loadSwiftFiles(from: globalComponentsPath))
     }

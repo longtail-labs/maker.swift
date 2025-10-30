@@ -17,16 +17,6 @@ enum ScaffoldResources {
         try loadData(named: "presets", withExtension: "json")
     }
     
-    static func defaultPresets() -> [String: ScreenSize] {
-        guard
-            let data = try? presetsJSON(),
-            let library = try? JSONDecoder().decode([String: ScreenSize].self, from: data)
-        else {
-            return [:]
-        }
-        return library
-    }
-    
     private static func loadString(named name: String, withExtension ext: String) throws -> String {
         let url = try resourceURL(named: name, withExtension: ext)
         return try String(contentsOf: url)
