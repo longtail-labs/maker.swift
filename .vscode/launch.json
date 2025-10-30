@@ -1,0 +1,44 @@
+{
+  "configurations": [
+    {
+      "type": "swift",
+      "request": "launch",
+      "args": [],
+      "cwd": "${workspaceFolder:maker.swift}",
+      "name": "Debug maker.swift",
+      "target": "maker.swift",
+      "configuration": "debug",
+      "preLaunchTask": "swift: Build Debug maker.swift"
+    },
+    {
+      "type": "swift",
+      "request": "launch",
+      "args": [],
+      "cwd": "${workspaceFolder:maker.swift}",
+      "name": "Release maker.swift",
+      "target": "maker.swift",
+      "configuration": "release",
+      "preLaunchTask": "swift: Build Release maker.swift"
+    },
+    {
+      "type": "swift",
+      "request": "launch",
+      "args": [],
+      "cwd": "${workspaceFolder:maker.swift}",
+      "name": "Debug maker",
+      "target": "maker",
+      "configuration": "debug",
+      "preLaunchTask": "swift: Build Debug maker"
+    },
+    {
+      "type": "swift",
+      "request": "launch",
+      "args": [],
+      "cwd": "${workspaceFolder:maker.swift}",
+      "name": "Release maker",
+      "target": "maker",
+      "configuration": "release",
+      "preLaunchTask": "swift: Build Release maker"
+    }
+  ]
+}
