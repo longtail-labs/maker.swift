@@ -1,0 +1,3 @@
+import ArgumentParser
+
+Maker.main()

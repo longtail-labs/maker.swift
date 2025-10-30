@@ -1,0 +1,11 @@
+{
+    "outputDirectory": "output/example",
+    "screens": [
+        {
+            "name": "slide-1",
+            "template": "templates/Example/Template.swift",
+            "params": "templates/Example/params/default.json",
+            "preset": "instagram-square"
+        }
+    ]
+}
